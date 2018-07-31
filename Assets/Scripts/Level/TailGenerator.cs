@@ -1,131 +1,93 @@
-﻿using System.Collections;
+﻿using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
-public class CoinProb
+static class BaseGenrator
 {
-    const int coinProb = 20;
-    private bool[] p = new bool[100];
-    public CoinProb(int factor)
+
+    private static Dictionary<BaseElement, HashSet<int>> _hashtableBases;
+
+    static BaseGenrator()
     {
-        for (int i = 0; i < coinProb + factor; i++)
-            p[i] = true;
-        for (int i = coinProb + factor; i < 100; i++)
-            p[i] = false;
+        int d1 = Constants.BASE1A_PROBOBILITY + Constants.BASE1B_PROBOBILITY, d2 = d1 + Constants.BASE2_PROBOBILITY, d3 = d2 + Constants.BASE3A_PROBOBILITY;
+        _hashtableBases = new Dictionary<BaseElement, HashSet<int>>()
+        {
+            { new Base1a(), new HashSet<int>(Enumerable.Range(0, Constants.BASE1A_PROBOBILITY))},
+            { new Base1b(), new HashSet<int>(Enumerable.Range(Constants.BASE1A_PROBOBILITY, Constants.BASE1B_PROBOBILITY))},
+            { new Base2(), new HashSet<int>(Enumerable.Range(d1, Constants.BASE2_PROBOBILITY))},
+            { new Base3a(), new HashSet<int>(Enumerable.Range(d2, Constants.BASE3A_PROBOBILITY))},
+            { new Base3b(), new HashSet<int>(Enumerable.Range(d3, Constants.BASE3B_PROBOBILITY))},
+        };
     }
-    public bool isCoin()
+
+    private static BaseElement GenerateBase()
     {
-        return p[Random.Range(0, 100)];
+        int value = Random.Range(0, 100);
+        BaseElement el = null;
+        foreach (KeyValuePair<BaseElement, HashSet<int>> pair in _hashtableBases)
+        {
+            if (pair.Value.Contains(value))
+            {
+                el = pair.Key;
+                break;
+            }   
+        }
+        return el;
+    }
+
+    private static void GenereateCorridor(Offset offset)
+    {
+        int d1 = Constants.CORRIDOR1A_PROBOBILITY + Constants.CORRIDOR1B_PROBOBILITY, d2 = d1 + Constants.CORRIDOR1C_PROBOBILITY, d3 = d2 + Constants.CORRIDOR2A_PROBOBILITY;
+        int value = Random.Range(0, 100);
+        Vector3 vector = new Vector3(offset.X, offset.Y, 0f);
+        GameObject instance;
+        if (Enumerable.Range(0, Constants.CORRIDOR1A_PROBOBILITY).Contains(value))
+        {
+            instance = Object.Instantiate(TailGenerator.corridor1a, vector, Quaternion.identity);
+            offset.ChangeOffset(0, 3);
+        }
+        if (Enumerable.Range(Constants.CORRIDOR1A_PROBOBILITY, Constants.CORRIDOR1B_PROBOBILITY).Contains(value))
+        {
+            instance = Object.Instantiate(TailGenerator.corridor1b, vector, Quaternion.identity);
+            offset.ChangeOffset(0, 3);
+        }
+        if (Enumerable.Range(d1, Constants.CORRIDOR1C_PROBOBILITY).Contains(value))
+        {
+            instance = Object.Instantiate(TailGenerator.corridor1c, vector, Quaternion.identity);
+            offset.ChangeOffset(0, 3);
+        }
+        if (Enumerable.Range(d2, Constants.CORRIDOR2A_PROBOBILITY).Contains(value))
+        {
+            instance = Object.Instantiate(TailGenerator.corridor2a, vector, Quaternion.identity);
+            offset.ChangeOffset(0, 4);
+        }
+        if (Enumerable.Range(d3, Constants.CORRIDOR2B_PROBOBILITY).Contains(value))
+        {
+            instance = Object.Instantiate(TailGenerator.corridor2a, vector, Quaternion.identity);
+            offset.ChangeOffset(1, 4);
+        }
+    }
+
+    public static void GenerateTail(ref Offset offset, int distance, ref bool flag)
+    {
+        if (flag)
+        {
+            GenereateCorridor(offset);
+            flag = false;
+        }
+        else
+        {
+            GenerateBase().MakeInstance(distance, offset);
+            flag = true;
+        }
     }
 }
-
-public class TrapProb
-{
-    const int trapProb = 30;
-    private bool[] p = new bool[100];
-    public TrapProb(int factor)
-    {
-        for (int i = 0; i < trapProb + factor; i++)
-            p[i] = true;
-        for (int i = trapProb + factor; i < 100; i++)
-            p[i] = false;
-    }
-    public bool isTrap()
-    {
-        return p[Random.Range(0, 100)];
-    }
-}
-
-public class Offset
-{
-    public int x;
-    public int y;
-    public bool flag;
-
-    public Offset(int x, int y)
-    {
-        SetOffset(x, y);
-        flag = false;
-    }
-
-    public void SetOffset(int x, int y)
-    {
-        this.x += x;
-        this.y += y;
-    }
-}
-
-static class TailFactory
-{
-    private static int[] base_p = new int[100];
-    private static int[] corridor_p = new int[100];
-    private static void BaseP()
-    {
-        for (int i = 0; i < 16; i++)
-        {
-            base_p[i] = 0;
-        }
-        for (int i = 16; i < 32; i++)
-        {
-            base_p[i] = 1;
-        }
-        for (int i = 32; i < 66; i++)
-        {
-            base_p[i] = 2;
-        }
-        for (int i = 66; i < 82; i++)
-        {
-            base_p[i] = 3;
-        }
-        for (int i = 82; i < 100; i++)
-        {
-            base_p[i] = 4;
-        }
-    }
-    private static void CorridorP()
-    {
-        for (int i = 0; i < 16; i++)
-        {
-            corridor_p[i] = 0;
-        }
-        for (int i = 16; i < 32; i++)
-        {
-            corridor_p[i] = 1;
-        }
-        for (int i = 32; i < 50; i++)
-        {
-            corridor_p[i] = 2;
-        }
-        for (int i = 50; i < 75; i++)
-        {
-            corridor_p[i] = 3;
-        }
-        for (int i = 75; i < 100; i++)
-        {
-            corridor_p[i] = 4;
-        }
-    }
-    static TailFactory()
-    {
-        BaseP();
-        CorridorP();
-    }
-    public static int GetBaseTail()
-    {
-        return base_p[UnityEngine.Random.Range(0, 100)];
-    }
-    public static int GetCorridorTail()
-    {
-        return corridor_p[UnityEngine.Random.Range(0, 100)];
-    }
-}
-
 
 public class Coordinates
 {
     public int x;
     public int y;
+
     public Coordinates(int x, int y)
     {
         this.x = x;
@@ -133,246 +95,61 @@ public class Coordinates
     }
 }
 
-static class CoordinateLister
+public class Offset
 {
-    public static List<Coordinates> MakeCoinCordinates(int baseID, Offset offset)
+    private Coordinates _coordinates;
+
+    public Offset(Coordinates coordinates) => _coordinates = coordinates;
+
+    public int X
     {
-        List<Coordinates> coordinates = new List<Coordinates>();
-        int x = offset.x;
-        int y = offset.y;
-        switch (baseID)
-        {
-            case 0:
-                coordinates.Add(new Coordinates(x, y + 3));
-                x = x - 1;
-                for (int i = 0; i < 3; i++)
-                {
-                    for (int j = 0; j < 3; j++)
-                    {
-                        coordinates.Add(new Coordinates(j + x, i + y));
-                    }
-                }
-                return coordinates;
-            case 1:
-                coordinates.Add(new Coordinates(x, y + 3));
-                coordinates.Add(new Coordinates(x-2, y + 1));
-                coordinates.Add(new Coordinates(x + 2, y + 1));
-                x = x - 1;
-                for (int i = 0; i < 3; i++)
-                {
-                    for (int j = 0; j < 3; j++)
-                    {
-                        coordinates.Add(new Coordinates(j + x, i + y));
-                    }
-                }
-                return coordinates;
-            case 2:
-                coordinates.Add(new Coordinates(x + 2, y));
-                coordinates.Add(new Coordinates(x - 2, y));
-                coordinates.Add(new Coordinates(x + 1, y+1));
-                coordinates.Add(new Coordinates(x - 1, y+1));
-                coordinates.Add(new Coordinates(x + 1, y + 3));
-                coordinates.Add(new Coordinates(x - 1, y + 3));
-                return coordinates;
-            case 3:
-                coordinates.Add(new Coordinates(x + 1, y));
-                coordinates.Add(new Coordinates(x - 1, y));
-                coordinates.Add(new Coordinates(x + 1, y+2));
-                coordinates.Add(new Coordinates(x - 1, y+2));
-                return coordinates;
-            default:
-                coordinates.Add(new Coordinates(x + 2, y));
-                coordinates.Add(new Coordinates(x - 2, y));
-                coordinates.Add(new Coordinates(x + 2, y+1));
-                coordinates.Add(new Coordinates(x - 2, y+1));
-                coordinates.Add(new Coordinates(x + 2, y+2));
-                coordinates.Add(new Coordinates(x - 2, y+2));
-                coordinates.Add(new Coordinates(x + 1, y + 2));
-                coordinates.Add(new Coordinates(x - 1, y + 2));
-                coordinates.Add(new Coordinates(x, y + 2));
-                return coordinates;
-        }
+        get
+        { return _coordinates.x; }
     }
 
-    public static List<Coordinates> MakeTrapCordinates(int baseID, Offset offset)
+    public int Y
     {
-        List<Coordinates> coordinates = new List<Coordinates>();
-        int x = offset.x;
-        int y = offset.y;
-        switch (baseID)
-        {
-            case 0:
-                coordinates.Add(new Coordinates(x, y + 1));
-                coordinates.Add(new Coordinates(x, y + 3));
-                break;
-            case 1:
-                coordinates.Add(new Coordinates(x, y + 1));
-                coordinates.Add(new Coordinates(x, y + 3));
-                break;
-            case 2:
-                coordinates.Add(new Coordinates(x, y + 1));
-                coordinates.Add(new Coordinates(x, y + 2));
-                coordinates.Add(new Coordinates(x, y + 3));
-                break;
-            case 3:
-                coordinates.Add(new Coordinates(x, y + 1));
-                coordinates.Add(new Coordinates(x, y + 2));
-                coordinates.Add(new Coordinates(x, y + 3));
-                break;
-            default:
-                coordinates.Add(new Coordinates(x, y + 1));
-                coordinates.Add(new Coordinates(x+2, y + 1));
-                coordinates.Add(new Coordinates(x - 2, y + 1));
-                coordinates.Add(new Coordinates(x, y + 2));
-                coordinates.Add(new Coordinates(x, y + 3));
-                break;
-        }
-        return coordinates;
+        get
+        { return _coordinates.y; }
+    }
+
+    public void ChangeOffset(int x, int y)
+    {
+        _coordinates.x += x;
+        _coordinates.y += y;
     }
 }
 
-public class TailGenerator : MonoBehaviour
-{
-
-    public GameObject Base1a;
-    public GameObject Base1b;
-    public GameObject Base2;
-    public GameObject Base3a;
-    public GameObject Base3b;
-    public GameObject Corridor1a;
-    public GameObject Corridor1b;
-    public GameObject Corridor1c;
-    public GameObject Corridor2a;
-    public GameObject Corridor2b;
-    public GameObject Coin;
-    public GameObject Trap;
-
-    const int trapProb = 10;
+public class TailGenerator : MonoBehaviour {
+    public static GameObject base1a { get; }
+    public static GameObject base1b { get; }
+    public static GameObject base2 { get; }
+    public static GameObject base3a { get; }
+    public static GameObject base3b { get; }
+    public static GameObject corridor1a { get; }
+    public static GameObject corridor1b { get; }
+    public static GameObject corridor1c { get; }
+    public static GameObject corridor2a { get; }
+    public static GameObject corridor2b { get; }
+    public static GameObject coin { get; }
+    public static GameObject trap { get; }
 
     private Transform fieldHolder;
     private int tailsCount = 3;
-    private Offset offset = new Offset(0, 0);
-
-    public static class CoinGenerator
-    {
-        public static void GenerateCoin(int TailID, Offset offset, int distance, GameObject coin)
-        {
-            List<Coordinates> list = CoordinateLister.MakeCoinCordinates(TailID, offset);
-            int size = list.Count;
-            for (int i = 0; i < (int)Mathf.Log(distance, 2f) + 1; i++)
-            {
-                if (size != 0)
-                {
-                    int index = Random.Range(0, size);
-                    GameObject instance = Instantiate(coin, new Vector3(list[index].x, list[index].y, 0f), Quaternion.identity);
-                    list.Remove(list[index]);
-                    size--;
-                }
-            }
-        }
-    }
-
-    public static class TrapGenerator
-    {
-        public static void GenerateTrap(int TailID, Offset offset, int distance, GameObject trap)
-        {
-            List<Coordinates> list = CoordinateLister.MakeTrapCordinates(TailID, offset);
-            int size = list.Count;
-            for(int i = 0; i < distance / 50 + 1; i++)
-            {
-                if (size != 0)
-                {
-                    int index = Random.Range(0, size);
-                    GameObject instance = Instantiate(trap, new Vector3(list[index].x, list[index].y, 0.001f), Quaternion.identity);
-                    list.Remove(list[index]);
-                    size--;
-                }
-            }
-        }
-    }
-
-    private void GenerateTail(int distance)
-    {
-        fieldHolder = new GameObject("Field").transform;
-        GameObject instance;
-        if (!offset.flag)
-        {
-            switch (TailFactory.GetBaseTail())
-            {
-                case 0:
-                    instance = Instantiate(Base1a, new Vector3(offset.x, offset.y, 0f), Quaternion.identity) as GameObject;
-                    CoinGenerator.GenerateCoin(0, offset,  distance, Coin);
-                    TrapGenerator.GenerateTrap(0, offset, distance, Trap);
-                    break;
-                case 1:
-                    instance = Instantiate(Base1b, new Vector3(offset.x, offset.y, 0f), Quaternion.identity) as GameObject;
-                    CoinGenerator.GenerateCoin(1, offset, distance, Coin);
-                    TrapGenerator.GenerateTrap(1, offset, distance, Trap);
-                    break;
-                case 2:
-                    instance = Instantiate(Base2, new Vector3(offset.x, offset.y, 0f), Quaternion.identity) as GameObject;
-                    CoinGenerator.GenerateCoin(2, offset, distance, Coin);
-                    TrapGenerator.GenerateTrap(2, offset, distance, Trap);
-                    break;
-                case 3:
-                    instance = Instantiate(Base3a, new Vector3(offset.x, offset.y, 0f), Quaternion.identity) as GameObject;
-                    CoinGenerator.GenerateCoin(3, offset, distance, Coin);
-                    TrapGenerator.GenerateTrap(3, offset, distance, Trap);
-                    break;
-                default:
-                    instance = Instantiate(Base3b, new Vector3(offset.x, offset.y, 0f), Quaternion.identity) as GameObject;
-                    CoinGenerator.GenerateCoin(4, offset, distance, Coin);
-                    TrapGenerator.GenerateTrap(4, offset, distance, Trap);
-                    break;
-            }
-            instance.transform.SetParent(fieldHolder);
-            offset.SetOffset(0, 4);
-            offset.flag = true;
-        }
-        else
-        {
-            switch (TailFactory.GetCorridorTail())
-            {
-                case 0:
-                    instance = Instantiate(Corridor1a, new Vector3(offset.x, offset.y, 0f), Quaternion.identity) as GameObject;
-                    offset.SetOffset(0, 3);
-                    break;
-                case 1:
-                    instance = Instantiate(Corridor1b, new Vector3(offset.x, offset.y, 0f), Quaternion.identity) as GameObject;
-                    offset.SetOffset(0, 3);
-                    break;
-                case 2:
-                    instance = Instantiate(Corridor1c, new Vector3(offset.x, offset.y, 0f), Quaternion.identity) as GameObject;
-                    offset.SetOffset(0, 3);
-                    break;
-                case 3:
-                    instance = Instantiate(Corridor2a, new Vector3(offset.x, offset.y, 0f), Quaternion.identity) as GameObject;
-                    offset.SetOffset(0, 4);
-                    break;
-                default:
-                    instance = Instantiate(Corridor2b, new Vector3(offset.x, offset.y, 0f), Quaternion.identity) as GameObject;
-                    offset.SetOffset(1, 4);
-                    break;
-            }
-            offset.flag = false;
-        }
-    }
-
+    private bool flag = true;
+    private Offset offset = new Offset(new Coordinates(0, 0));
     // Use this for initialization
-    public void Start() { 
-        GenerateTail(0);
-        GameObject a =  Instantiate(Trap, new Vector3(0, 5, 0.001f), Quaternion.identity) as GameObject;
-        GenerateTail(0);
-        GenerateTail(0);
-    }
-
-    public void Update()
-    {
+    public void Start () {
+		
+	}
+	
+	// Update is called once per frame
+	void Update () {
         int distance = GameObject.FindGameObjectWithTag("Player").GetComponent<Controller>().distanceMax;
-        if (distance % 4 == 0 && distance / 3 >= tailsCount -1 ) { 
-            GenerateTail(distance);
+        if (distance % 4 == 0 && distance / 3 >= tailsCount - 1)
+        {
+            BaseGenrator.GenerateTail(ref offset, distance, ref flag);
             tailsCount++;
         }
     }
-
 }
