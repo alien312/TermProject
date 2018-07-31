@@ -214,7 +214,7 @@ public class Base3a : BaseElement
 
     public override void MakeInstance(int distance, Offset offset)
     {
-        GameObject instance = Object.Instantiate(TailGenerator.base3a, new Vector3(_offset.X, _offset.Y, 0f), Quaternion.identity) as GameObject;
+        GameObject instance = Object.Instantiate(TailGenerator.base3a, new Vector3(offset.X, offset.Y, 0f), Quaternion.identity) as GameObject;
         base.MakeInstance(distance, offset);
     }
 }
